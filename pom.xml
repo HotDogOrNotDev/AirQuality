@@ -147,6 +147,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<executable>true</executable>
+					<mainClass>com.weather.AirQuality.AirQualityApplication</mainClass>
 				</configuration>
 			</plugin>
 		</plugins>

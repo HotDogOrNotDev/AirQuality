@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  air-quality:
+    build: .
+    container_name: air-quality
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    restart: unless-stopped
