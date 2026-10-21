@@ -4,18 +4,7 @@ Telegram-бот на Spring Boot: пользователь пишет город
 
 ## Как это устроено
 
-```text
-Telegram  →  TelegramBot  →  TextMessageHandler / CallBackQueryHandler
-                │
-                ├─ BotDialog        тексты и клавиатура
-                └─ BotMessenger     отправка сообщений
-                          │
-                          └─ AirQualityService  →  OpenFeign  →  api.waqi.info
-                                                          │
-Prometheus  ←  /actuator/prometheus  ←  Spring Boot
-     │
-     └─ Grafana
-```
+![Схема бота: кнопка меню, текст города и метрики](img/architecture.png)
 
 `TelegramBot` только принимает обновления и один раз отдаёт себя в `BotMessenger`. Обработчики и сервис качества воздуха бота напрямую не знают, поэтому цикла зависимостей нет.
 
