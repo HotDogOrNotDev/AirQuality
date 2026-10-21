@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 5s
+  external_labels:
+    monitor: air-quality
+
+scrape_configs:
+  - job_name: air-quality
+    scrape_interval: 5s
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['air-quality:8080']

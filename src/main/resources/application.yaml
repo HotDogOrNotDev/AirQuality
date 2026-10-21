@@ -1,0 +1,35 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        show_sql: true
+
+bot:
+  name: ${BOT_NAME:AirQualityTbot}
+  token: ${BOT_TOKEN}
+
+waqi:
+  url: https://api.waqi.info/feed
+  token: ${WAQI_TOKEN}
+
+server:
+  address: 0.0.0.0
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
