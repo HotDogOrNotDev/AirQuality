@@ -21,25 +21,46 @@ public class BotDialog {
         this.messenger = messenger;
     }
 
+    public static final String DESCRIPTION = """
+            Показывает качество воздуха по данным WAQI: PM2.5, температуру, влажность и короткую рекомендацию.
+
+            Город пишите на английском: moscow.
+            Станцию можно уточнить через запятую: Moscow, Spirid.""";
+
+    public static final String SHORT_DESCRIPTION =
+            "Качество воздуха по городу: PM2.5, температура, влажность и рекомендация.";
+
     public void start(long chatId, String name) {
         log.info("Replied to {}", name);
-        messenger.send(chatId, "Привет, " + name + "! Рад знакомству.");
+        messenger.send(chatId, "Привет, " + name + "!");
         menu(chatId);
     }
 
     public void help(long chatId) {
         messenger.send(chatId, """
-                Список команд:
-                /start — запустить бота
-                /help — показать эту справку""");
+                Бот запрашивает станцию WAQI и присылает PM2.5, температуру, влажность и рекомендацию.
+
+                Как писать запрос:
+                moscow — основная станция города
+                Moscow, Spirid — станция, в имени которой есть это слово
+                Moscow,Spirid — то же самое, пробел после запятой не обязателен
+
+                Регистр не важен. Город нужен на английском: так его понимает WAQI.
+                Если подходят несколько станций, бот пришлёт список, чтобы название можно было уточнить.
+
+                Команды:
+                /start — начать
+                /help — эти правила""");
     }
 
     public void askCity(long chatId) {
-        messenger.send(chatId, "Введите город на английском, чтобы проверить качество воздуха:");
+        messenger.send(chatId, """
+                Введите город на английском.
+                Чтобы выбрать станцию, добавьте часть её названия через запятую: Moscow, Spirid""");
     }
 
     public void checkingCity(long chatId, String city) {
-        messenger.send(chatId, "Проверяю качество воздуха в городе " + city + "...");
+        messenger.send(chatId, "Проверяю качество воздуха: " + city + "...");
     }
 
     public void unknownCommand(long chatId) {
@@ -53,7 +74,11 @@ public class BotDialog {
     public void menu(long chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
-        message.setText("Выберите, что нужно:");
+        message.setText("""
+                Напишите город на английском — пришлю PM2.5, температуру, влажность и рекомендацию.
+
+                moscow — основная станция города
+                Moscow, Spirid — станция, в имени которой есть это слово""");
 
         InlineKeyboardButton button = new InlineKeyboardButton("Проверить качество воздуха");
         button.setCallbackData(AIR_QUALITY_CALLBACK);

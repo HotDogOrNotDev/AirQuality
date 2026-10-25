@@ -13,7 +13,7 @@ bot:
   token: ${BOT_TOKEN}
 
 waqi:
-  url: https://api.waqi.info/feed
+  url: https://api.waqi.info
   token: ${WAQI_TOKEN}
 
 server:

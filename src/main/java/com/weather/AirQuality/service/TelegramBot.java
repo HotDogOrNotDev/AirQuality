@@ -5,12 +5,18 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.json.JSONObject;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 
 @Component
@@ -43,6 +49,33 @@ public class TelegramBot extends TelegramLongPollingBot {
             execute(new SetMyCommands(commands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
             log.error("Error with the list of commands", e);
+        }
+        publishProfile("setMyDescription", "description", BotDialog.DESCRIPTION);
+        publishProfile("setMyShortDescription", "short_description", BotDialog.SHORT_DESCRIPTION);
+    }
+
+    private void publishProfile(String method, String field, String text) {
+        for (String language : new String[]{null, "ru"}) {
+            JSONObject body = new JSONObject();
+            body.put(field, text);
+            if (language != null) {
+                body.put("language_code", language);
+            }
+            try {
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create("https://api.telegram.org/bot" + getBotToken() + "/" + method))
+                        .timeout(Duration.ofSeconds(10))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                        .build();
+                HttpResponse<String> response = HttpClient.newHttpClient()
+                        .send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() != 200) {
+                    log.error("Telegram {} failed with status {}", method, response.statusCode());
+                }
+            } catch (Exception e) {
+                log.error("Telegram {} failed: {}", method, e.getMessage());
+            }
         }
     }
 
