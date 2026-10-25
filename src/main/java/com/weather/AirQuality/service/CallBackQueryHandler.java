@@ -9,9 +9,11 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 public class CallBackQueryHandler {
 
     private final BotDialog botDialog;
+    private final AirQualityService airQualityService;
 
-    public CallBackQueryHandler(BotDialog botDialog) {
+    public CallBackQueryHandler(BotDialog botDialog, AirQualityService airQualityService) {
         this.botDialog = botDialog;
+        this.airQualityService = airQualityService;
     }
 
     public void handleCallbackQuery(Update update) {
@@ -21,6 +23,10 @@ public class CallBackQueryHandler {
         try {
             if (BotDialog.AIR_QUALITY_CALLBACK.equals(callbackData)) {
                 botDialog.askCity(chatId);
+                return;
+            }
+            if (callbackData.startsWith(BotDialog.STATIONS_CALLBACK_PREFIX)) {
+                airQualityService.sendCityStations(chatId, callbackData.substring(BotDialog.STATIONS_CALLBACK_PREFIX.length()));
                 return;
             }
             log.warn("Unknown callback data received: {}", callbackData);

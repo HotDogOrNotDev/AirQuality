@@ -10,6 +10,10 @@ import java.util.Locale;
 
 public class WaqiStationSearch {
 
+    public List<WaqiStation> all(String responseBody) throws JSONException {
+        return matching(responseBody, "");
+    }
+
     public List<WaqiStation> matching(String responseBody, String fragment) throws JSONException {
         JSONObject json = new JSONObject(responseBody);
         if (!"ok".equals(json.optString("status"))) {

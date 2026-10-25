@@ -20,22 +20,25 @@ public class AirQualityService {
     private final WaqiResponseParser parser;
     private final Pm25Advisor advisor;
     private final WaqiStationSearch stationSearch;
+    private final BotDialog botDialog;
 
     @Autowired
-    public AirQualityService(AirQualityInterface airQualityInterface, BotMessenger botMessenger) {
-        this(airQualityInterface, botMessenger, new WaqiResponseParser(), new Pm25Advisor(), new WaqiStationSearch());
+    public AirQualityService(AirQualityInterface airQualityInterface, BotMessenger botMessenger, BotDialog botDialog) {
+        this(airQualityInterface, botMessenger, new WaqiResponseParser(), new Pm25Advisor(), new WaqiStationSearch(), botDialog);
     }
 
     AirQualityService(AirQualityInterface airQualityInterface,
                       BotMessenger botMessenger,
                       WaqiResponseParser parser,
                       Pm25Advisor advisor,
-                      WaqiStationSearch stationSearch) {
+                      WaqiStationSearch stationSearch,
+                      BotDialog botDialog) {
         this.airQualityInterface = airQualityInterface;
         this.botMessenger = botMessenger;
         this.parser = parser;
         this.advisor = advisor;
         this.stationSearch = stationSearch;
+        this.botDialog = botDialog;
     }
 
     public void sendAirQualityNow(long chatId, String text) {
@@ -64,7 +67,11 @@ public class AirQualityService {
             List<WaqiStationSearch.WaqiStation> matches = stationSearch.matching(responseBody, query.stationFragment());
             log.info("Station search for {} / {} returned {} matches", keyword, query.stationFragment(), matches.size());
             if (matches.isEmpty()) {
-                botMessenger.send(chatId, "Станция не найдена. Уточните название и попробуйте снова.");
+                if (stationSearch.all(responseBody).isEmpty()) {
+                    botMessenger.send(chatId, "Станция не найдена. Уточните название и попробуйте снова.");
+                } else {
+                    botDialog.stationNotFound(chatId, keyword);
+                }
                 return;
             }
             if (matches.size() > 1) {
@@ -76,6 +83,44 @@ public class AirQualityService {
             log.error("Station search failed: {}", e.getMessage());
             botMessenger.send(chatId, "Станция не найдена. Уточните название и попробуйте снова.");
         }
+    }
+
+    public void sendCityStations(long chatId, String city) {
+        if (city == null || city.isBlank()) {
+            botMessenger.send(chatId, "Город не найден. Пожалуйста, проверьте написание и попробуйте снова.");
+            return;
+        }
+        try {
+            ResponseEntity<String> response = airQualityInterface.searchStations(city.toLowerCase(Locale.ROOT));
+            String responseBody = response.getBody();
+            if (responseBody == null) {
+                botMessenger.send(chatId, "Станции не найдены. Попробуйте позже.");
+                return;
+            }
+            List<WaqiStationSearch.WaqiStation> stations = stationSearch.all(responseBody);
+            if (stations.isEmpty()) {
+                botMessenger.send(chatId, "Станции не найдены. Попробуйте позже.");
+                return;
+            }
+            sendNames(chatId, "Станции:", stations);
+        } catch (Exception e) {
+            log.error("Station list failed: {}", e.getMessage());
+            botMessenger.send(chatId, "Станции не найдены. Попробуйте позже.");
+        }
+    }
+
+    private void sendNames(long chatId, String title, List<WaqiStationSearch.WaqiStation> stations) {
+        StringBuilder message = new StringBuilder(title);
+        for (WaqiStationSearch.WaqiStation station : stations) {
+            String line = "\n" + station.name();
+            if (message.length() + line.length() > 3500) {
+                botMessenger.send(chatId, message.toString());
+                message = new StringBuilder(station.name());
+            } else {
+                message.append(line);
+            }
+        }
+        botMessenger.send(chatId, message.toString());
     }
 
     private String severalStationsMessage(List<WaqiStationSearch.WaqiStation> matches) {

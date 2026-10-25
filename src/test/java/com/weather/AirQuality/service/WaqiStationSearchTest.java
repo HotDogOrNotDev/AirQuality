@@ -36,6 +36,21 @@ class WaqiStationSearchTest {
     }
 
     @Test
+    void listsEveryStationWhenFragmentIsEmpty() throws JSONException {
+        List<WaqiStationSearch.WaqiStation> stations = search.all("""
+                {
+                  "status": "ok",
+                  "data": [
+                    { "uid": 1, "station": { "name": "Moscow, Spiridonovka" } },
+                    { "uid": 2, "station": { "name": "Moscow, Shabolovka" } }
+                  ]
+                }
+                """);
+
+        assertEquals(2, stations.size());
+    }
+
+    @Test
     void returnsEmptyWhenSearchFailed() throws JSONException {
         assertTrue(search.matching("""
                 { "status": "error", "data": "Unknown station" }

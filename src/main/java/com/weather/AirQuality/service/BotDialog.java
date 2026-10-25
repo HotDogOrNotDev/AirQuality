@@ -14,6 +14,7 @@ import java.util.List;
 public class BotDialog {
 
     static final String AIR_QUALITY_CALLBACK = "Air quality check";
+    static final String STATIONS_CALLBACK_PREFIX = "stations:";
 
     private final BotMessenger messenger;
 
@@ -47,6 +48,7 @@ public class BotDialog {
 
                 Регистр не важен. Город нужен на английском: так его понимает WAQI.
                 Если подходят несколько станций, бот пришлёт список, чтобы название можно было уточнить.
+                Если станция не найдена, можно запросить все станции этого города.
 
                 Команды:
                 /start — начать
@@ -57,6 +59,25 @@ public class BotDialog {
         messenger.send(chatId, """
                 Введите город на английском.
                 Чтобы выбрать станцию, добавьте часть её названия через запятую: Moscow, Spirid""");
+    }
+
+    public void stationNotFound(long chatId, String city) {
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setText("Станция не найдена. Можно посмотреть все станции этого города.");
+
+        InlineKeyboardButton button = new InlineKeyboardButton("Все станции");
+        button.setCallbackData(STATIONS_CALLBACK_PREFIX + city);
+
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        row.add(button);
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        rows.add(row);
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(rows);
+        message.setReplyMarkup(markup);
+        messenger.send(message);
     }
 
     public void checkingCity(long chatId, String city) {
